@@ -74,19 +74,23 @@ export function useInventory() {
   )
 
   const removeStock = useCallback(
-    (slotId: string, notes?: string) => {
+    (slotId: string, quantity: number, notes?: string) => {
       const pallet = slots[slotId]?.pallet
       if (!pallet) return
+      const remaining = pallet.quantity - quantity
       setSlots((prev) => ({
         ...prev,
-        [slotId]: { ...prev[slotId], pallet: null },
+        [slotId]: {
+          ...prev[slotId],
+          pallet: remaining > 0 ? { ...pallet, quantity: remaining } : null,
+        },
       }))
       const tx: Transaction = {
         id: crypto.randomUUID(),
         type: 'OUT',
         productName: pallet.productName,
         productCode: pallet.productCode,
-        quantity: pallet.quantity,
+        quantity,
         unit: pallet.unit,
         slotId,
         date: new Date().toISOString(),

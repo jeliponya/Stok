@@ -8,7 +8,7 @@ interface Props {
   allSlots: Record<string, ShelfSlot>
   onClose: () => void
   onAdd: (slotId: string, pallet: Omit<Pallet, 'id'>) => void
-  onRemove: (slotId: string, notes?: string) => void
+  onRemove: (slotId: string, quantity: number, notes?: string) => void
   onMove: (fromSlotId: string, toSlotId: string) => void
 }
 
@@ -25,12 +25,14 @@ export default function StockModal({ slot, allSlots, onClose, onAdd, onRemove, o
   })
   const [moveTarget, setMoveTarget] = useState('')
   const [removeNotes, setRemoveNotes] = useState('')
+  const [removeQty, setRemoveQty] = useState('')
 
   useEffect(() => {
     setMode('view')
     setForm({ productName: '', productCode: '', quantity: '', unit: 'adet', notes: '' })
     setMoveTarget('')
     setRemoveNotes('')
+    setRemoveQty('')
   }, [slot])
 
   if (!slot) return null
@@ -58,7 +60,9 @@ export default function StockModal({ slot, allSlots, onClose, onAdd, onRemove, o
   }
 
   function handleRemove() {
-    onRemove(slot!.id, removeNotes || undefined)
+    const qty = Number(removeQty)
+    if (!qty || qty <= 0) return
+    onRemove(slot!.id, qty, removeNotes || undefined)
     onClose()
   }
 
@@ -213,8 +217,30 @@ export default function StockModal({ slot, allSlots, onClose, onAdd, onRemove, o
             <div className="space-y-3">
               <h4 className="font-semibold text-gray-700">Stok Çıkışı</h4>
               <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
-                <strong>{slot.pallet!.productName}</strong> ({slot.pallet!.quantity}{' '}
-                {slot.pallet!.unit}) çıkarılacak. Onaylıyor musunuz?
+                <strong>{slot.pallet!.productName}</strong> — Mevcut:{' '}
+                <strong>{slot.pallet!.quantity} {slot.pallet!.unit}</strong>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  Çıkarılacak Miktar * (max {slot.pallet!.quantity})
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={slot.pallet!.quantity}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                  placeholder={`1 – ${slot.pallet!.quantity}`}
+                  value={removeQty}
+                  onChange={(e) => setRemoveQty(e.target.value)}
+                />
+                {removeQty && Number(removeQty) < slot.pallet!.quantity && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    Çıkıştan sonra kalan: {slot.pallet!.quantity - Number(removeQty)} {slot.pallet!.unit}
+                  </p>
+                )}
+                {removeQty && Number(removeQty) >= slot.pallet!.quantity && (
+                  <p className="text-xs text-red-500 mt-1">Tüm stok çıkarılacak, palet boşalacak.</p>
+                )}
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Not (isteğe bağlı)</label>
@@ -228,7 +254,8 @@ export default function StockModal({ slot, allSlots, onClose, onAdd, onRemove, o
               <div className="flex gap-2 pt-1">
                 <button
                   onClick={handleRemove}
-                  className="flex-1 py-2.5 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition"
+                  disabled={!removeQty || Number(removeQty) <= 0}
+                  className="flex-1 py-2.5 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition disabled:opacity-40"
                 >
                   Çıkart
                 </button>
