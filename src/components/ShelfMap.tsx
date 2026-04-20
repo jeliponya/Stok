@@ -10,6 +10,11 @@ interface Props {
 const TIERS: Tier[] = [3, 2, 1]
 const TIER_LABEL: Record<Tier, string> = { 3: 'ÜST KAT', 2: 'ORTA KAT', 1: 'ALT KAT' }
 
+const SHADOW_OCC  = '2px 2px 0 0 #065f46, 4px 4px 0 0 #047857, 0 0 14px rgba(16,185,129,0.25), 0 4px 12px rgba(0,0,0,0.5)'
+const SHADOW_EMPT = '1px 1px 0 0 #0e2030, 2px 2px 0 0 #0a1828, 0 2px 6px rgba(0,0,0,0.4)'
+const SHADOW_OCC_H  = '4px 5px 0 0 #065f46, 6px 7px 0 0 #047857, 0 0 20px rgba(16,185,129,0.45), 0 8px 20px rgba(0,0,0,0.6)'
+const SHADOW_EMPT_H = '2px 3px 0 0 #1a3a5c, 3px 4px 0 0 #0d2035, 0 4px 10px rgba(0,0,0,0.4)'
+
 function PalletBox({ slot, onClick }: { slot: ShelfSlot; onClick: () => void }) {
   const occ = slot.pallet !== null
 
@@ -22,52 +27,46 @@ function PalletBox({ slot, onClick }: { slot: ShelfSlot; onClick: () => void }) 
           : 'Boş – tıkla ekle'
       }
       style={{
-        /* 3-D box illusion via layered box-shadow */
-        boxShadow: occ
-          ? '2px 2px 0 0 #065f46, 4px 4px 0 0 #047857, 0 6px 16px rgba(0,0,0,0.45)'
-          : '1px 1px 0 0 #1e3550, 2px 2px 0 0 #162030, 0 2px 6px rgba(0,0,0,0.3)',
+        position: 'relative',
+        width: '100%',
+        aspectRatio: '1',
+        borderRadius: '4px',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        cursor: 'pointer',
+        userSelect: 'none',
         transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+        boxShadow: occ ? SHADOW_OCC : SHADOW_EMPT,
+        background: occ
+          ? 'linear-gradient(180deg, #4ade80 0%, #22c55e 30%, #16a34a 70%, #15803d 100%)'
+          : 'linear-gradient(180deg, #1e2d3e 0%, #151f2d 100%)',
+        border: occ ? '1px solid rgba(134,239,172,0.5)' : '1px dashed rgba(50,80,110,0.7)',
       }}
       onMouseEnter={(e) => {
-        const el = e.currentTarget
-        if (occ) {
-          el.style.transform = 'translate(-2px,-4px)'
-          el.style.boxShadow = '4px 6px 0 0 #065f46, 6px 8px 0 0 #047857, 0 12px 24px rgba(0,0,0,0.55)'
-        } else {
-          el.style.transform = 'translate(-1px,-2px)'
-          el.style.boxShadow = '2px 3px 0 0 #1e3a5c, 3px 4px 0 0 #0d2035, 0 6px 12px rgba(0,0,0,0.4)'
-        }
+        e.currentTarget.style.transform = occ ? 'translate(-2px,-3px)' : 'translate(-1px,-2px)'
+        e.currentTarget.style.boxShadow = occ ? SHADOW_OCC_H : SHADOW_EMPT_H
       }}
       onMouseLeave={(e) => {
-        const el = e.currentTarget
-        el.style.transform = ''
-        el.style.boxShadow = occ
-          ? '2px 2px 0 0 #065f46, 4px 4px 0 0 #047857, 0 6px 16px rgba(0,0,0,0.45)'
-          : '1px 1px 0 0 #1e3550, 2px 2px 0 0 #162030, 0 2px 6px rgba(0,0,0,0.3)'
+        e.currentTarget.style.transform = ''
+        e.currentTarget.style.boxShadow = occ ? SHADOW_OCC : SHADOW_EMPT
       }}
-      className={`
-        relative w-full aspect-square rounded-sm overflow-hidden
-        flex flex-col items-center justify-center cursor-pointer select-none
-        ${occ
-          ? 'bg-gradient-to-b from-emerald-400 via-emerald-500 to-emerald-600 border border-emerald-300/40'
-          : 'bg-gradient-to-b from-slate-700 to-slate-800 border border-dashed border-slate-500/60'
-        }
-      `}
     >
       {/* Pallet wood slat lines */}
       {occ && (
         <>
-          <div className="absolute inset-x-0 top-[33%] h-px bg-white/10 pointer-events-none" />
-          <div className="absolute inset-x-0 top-[66%] h-px bg-white/10 pointer-events-none" />
-          <div className="absolute inset-y-0 left-[33%] w-px bg-white/10 pointer-events-none" />
-          <div className="absolute inset-y-0 left-[66%] w-px bg-white/10 pointer-events-none" />
-          {/* top highlight */}
-          <div className="absolute inset-x-0 top-0 h-[30%] bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+          <div style={{ position:'absolute', inset:'0 0 auto 0', top:'33%', height:'1px', background:'rgba(255,255,255,0.12)', pointerEvents:'none' }} />
+          <div style={{ position:'absolute', inset:'0 0 auto 0', top:'66%', height:'1px', background:'rgba(255,255,255,0.12)', pointerEvents:'none' }} />
+          <div style={{ position:'absolute', inset:'0 auto 0 33%', width:'1px', background:'rgba(255,255,255,0.12)', pointerEvents:'none' }} />
+          <div style={{ position:'absolute', inset:'0 auto 0 66%', width:'1px', background:'rgba(255,255,255,0.12)', pointerEvents:'none' }} />
+          <div style={{ position:'absolute', inset:'0 0 auto 0', top:0, height:'30%', background:'linear-gradient(180deg,rgba(255,255,255,0.22),transparent)', pointerEvents:'none' }} />
         </>
       )}
 
       {/* Slot letter */}
-      <span className={`absolute top-0.5 left-1 text-[8px] font-bold ${occ ? 'text-white/60' : 'text-slate-500'}`}>
+      <span style={{ position:'absolute', top:2, left:4, fontSize:'8px', fontWeight:700, color: occ ? 'rgba(255,255,255,0.55)' : 'rgba(60,100,140,0.7)' }}>
         {slot.slot}
       </span>
 

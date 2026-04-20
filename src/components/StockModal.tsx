@@ -8,11 +8,12 @@ interface Props {
   allSlots: Record<string, ShelfSlot>
   onClose: () => void
   onAdd: (slotId: string, pallet: Omit<Pallet, 'id'>) => void
+  onAddMore: (slotId: string, quantity: number, notes?: string) => void
   onRemove: (slotId: string, quantity: number, notes?: string) => void
   onMove: (fromSlotId: string, toSlotId: string) => void
 }
 
-type Mode = 'view' | 'add' | 'remove' | 'move'
+type Mode = 'view' | 'add' | 'addmore' | 'remove' | 'move'
 
 const inputCls = `
   w-full rounded-lg px-3 py-2 text-sm outline-none transition
@@ -20,12 +21,14 @@ const inputCls = `
   placeholder-slate-600 focus:border-blue-500/70 focus:ring-1 focus:ring-blue-500/30
 `
 
-export default function StockModal({ slot, allSlots, onClose, onAdd, onRemove, onMove }: Props) {
+export default function StockModal({ slot, allSlots, onClose, onAdd, onAddMore, onRemove, onMove }: Props) {
   const [mode, setMode] = useState<Mode>('view')
   const [form, setForm] = useState({ productName: '', productCode: '', quantity: '', unit: 'adet', notes: '' })
   const [moveTarget, setMoveTarget] = useState('')
   const [removeNotes, setRemoveNotes] = useState('')
   const [removeQty, setRemoveQty] = useState('')
+  const [moreQty, setMoreQty] = useState('')
+  const [moreNotes, setMoreNotes] = useState('')
 
   useEffect(() => {
     setMode('view')
@@ -33,6 +36,8 @@ export default function StockModal({ slot, allSlots, onClose, onAdd, onRemove, o
     setMoveTarget('')
     setRemoveNotes('')
     setRemoveQty('')
+    setMoreQty('')
+    setMoreNotes('')
   }, [slot])
 
   if (!slot) return null
@@ -55,6 +60,13 @@ export default function StockModal({ slot, allSlots, onClose, onAdd, onRemove, o
       entryDate: new Date().toISOString(),
       notes: form.notes || undefined,
     })
+    onClose()
+  }
+
+  function handleAddMore() {
+    const qty = Number(moreQty)
+    if (!qty || qty <= 0) return
+    onAddMore(slot!.id, qty, moreNotes || undefined)
     onClose()
   }
 
@@ -156,6 +168,9 @@ export default function StockModal({ slot, allSlots, onClose, onAdd, onRemove, o
                 )}
                 {occupied && (
                   <>
+                    <ActionButton color="green" onClick={() => setMode('addmore')}>
+                      + Miktar Ekle (İlave Giriş)
+                    </ActionButton>
                     <ActionButton color="red" onClick={() => setMode('remove')}>
                       − Ürün Çıkart (Stok Çıkışı)
                     </ActionButton>
@@ -216,6 +231,48 @@ export default function StockModal({ slot, allSlots, onClose, onAdd, onRemove, o
                 </button>
               </div>
             </form>
+          )}
+
+          {/* Add More mode */}
+          {mode === 'addmore' && (
+            <div className="space-y-3">
+              <SectionTitle>İlave Stok Girişi</SectionTitle>
+              <div className="rounded-xl p-3 text-sm" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}>
+                <span style={{ color: '#6ee7b7' }}>{slot.pallet!.productName}</span>
+                <span style={{ color: '#2a5a4a' }}> — Mevcut: </span>
+                <span className="font-bold" style={{ color: '#10b981' }}>{slot.pallet!.quantity} {slot.pallet!.unit}</span>
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1" style={{ color: '#4a6a8a' }}>
+                  Eklenecek Miktar *
+                </label>
+                <input
+                  type="number" min={1}
+                  className={inputCls}
+                  placeholder="Kaç adet eklenecek?"
+                  value={moreQty}
+                  onChange={(e) => setMoreQty(e.target.value)}
+                />
+                {moreQty && Number(moreQty) > 0 && (
+                  <p className="text-xs mt-1.5 font-medium" style={{ color: '#10b981' }}>
+                    Eklemeden sonra toplam: <strong>{slot.pallet!.quantity + Number(moreQty)} {slot.pallet!.unit}</strong>
+                  </p>
+                )}
+              </div>
+              <Field label="Not (isteğe bağlı)" value={moreNotes}
+                onChange={setMoreNotes} placeholder="İlave giriş notu..." />
+              <div className="flex gap-2 pt-1">
+                <ActionButton color="green" onClick={handleAddMore}
+                  disabled={!moreQty || Number(moreQty) <= 0}>
+                  + Ekle
+                </ActionButton>
+                <button onClick={() => setMode('view')}
+                  className="px-4 rounded-lg text-sm font-medium transition"
+                  style={{ background: 'rgba(255,255,255,0.04)', color: '#4a6a8a', border: '1px solid #1a3050' }}>
+                  İptal
+                </button>
+              </div>
+            </div>
           )}
 
           {/* Remove mode */}
@@ -336,13 +393,14 @@ function ActionButton({
   children, color, onClick, type = 'button', disabled,
 }: {
   children: React.ReactNode
-  color: 'blue' | 'red' | 'amber'
+  color: 'blue' | 'green' | 'red' | 'amber'
   onClick?: () => void
   type?: 'button' | 'submit'
   disabled?: boolean
 }) {
   const styles = {
     blue:  { bg: 'linear-gradient(135deg, #1d4ed8, #2563eb)', border: '#3b82f6', shadow: 'rgba(59,130,246,0.3)' },
+    green: { bg: 'linear-gradient(135deg, #047857, #059669)', border: '#10b981', shadow: 'rgba(16,185,129,0.35)' },
     red:   { bg: 'linear-gradient(135deg, #b91c1c, #dc2626)', border: '#ef4444', shadow: 'rgba(239,68,68,0.3)'  },
     amber: { bg: 'linear-gradient(135deg, #b45309, #d97706)', border: '#f59e0b', shadow: 'rgba(245,158,11,0.3)' },
   }

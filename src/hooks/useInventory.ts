@@ -73,6 +73,30 @@ export function useInventory() {
     []
   )
 
+  const addMoreStock = useCallback(
+    (slotId: string, quantity: number, notes?: string) => {
+      const pallet = slots[slotId]?.pallet
+      if (!pallet) return
+      setSlots((prev) => ({
+        ...prev,
+        [slotId]: { ...prev[slotId], pallet: { ...pallet, quantity: pallet.quantity + quantity } },
+      }))
+      const tx: Transaction = {
+        id: crypto.randomUUID(),
+        type: 'IN',
+        productName: pallet.productName,
+        productCode: pallet.productCode,
+        quantity,
+        unit: pallet.unit,
+        slotId,
+        date: new Date().toISOString(),
+        notes,
+      }
+      setTransactions((prev) => [tx, ...prev])
+    },
+    [slots]
+  )
+
   const removeStock = useCallback(
     (slotId: string, quantity: number, notes?: string) => {
       const pallet = slots[slotId]?.pallet
@@ -136,6 +160,7 @@ export function useInventory() {
     transactions,
     hydrated,
     addStock,
+    addMoreStock,
     removeStock,
     moveStock,
     stats: { totalSlots, occupiedSlots, emptySlots },

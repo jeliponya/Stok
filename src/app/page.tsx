@@ -10,7 +10,7 @@ import InventoryTable from '@/components/InventoryTable'
 type Tab = 'shelf' | 'inventory' | 'log'
 
 export default function Home() {
-  const { slots, transactions, hydrated, addStock, removeStock, moveStock, stats } = useInventory()
+  const { slots, transactions, hydrated, addStock, addMoreStock, removeStock, moveStock, stats } = useInventory()
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<Tab>('shelf')
 
@@ -144,6 +144,7 @@ export default function Home() {
           allSlots={slots}
           onClose={() => setSelectedSlotId(null)}
           onAdd={addStock}
+          onAddMore={addMoreStock}
           onRemove={removeStock}
           onMove={moveStock}
         />
