@@ -16,52 +16,112 @@ export default function Home() {
 
   if (!hydrated) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-400 text-sm">Yükleniyor...</div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        <div className="text-slate-500 text-sm tracking-widest animate-pulse">YÜKLENİYOR...</div>
       </div>
     )
   }
 
   const selectedSlot = selectedSlotId ? slots[selectedSlotId] : null
+  const fillPct = Math.round((stats.occupiedSlots / stats.totalSlots) * 100)
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(160deg, #070e18 0%, #0b1525 100%)' }}>
       {/* Header */}
-      <header className="bg-blue-700 text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+      <header
+        className="relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(90deg, #0d1f38 0%, #0f2040 50%, #0d1f38 100%)',
+          borderBottom: '1px solid #1a3050',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
+        }}
+      >
+        {/* Decorative grid lines */}
+        <div
+          className="absolute inset-0 opacity-5 pointer-events-none"
+          style={{
+            backgroundImage: 'linear-gradient(rgba(100,180,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(100,180,255,0.5) 1px, transparent 1px)',
+            backgroundSize: '40px 40px',
+          }}
+        />
+
+        <div className="relative max-w-7xl mx-auto px-4 py-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {/* Title */}
             <div>
-              <h1 className="text-xl font-bold tracking-tight">Depo Stok Takip</h1>
-              <p className="text-blue-200 text-xs mt-0.5">3 Katlı Raf · 6 Bölme · 2 Palet/Bölme</p>
+              <div className="flex items-center gap-2 mb-1">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-lg"
+                  style={{ background: 'linear-gradient(135deg, #1e4a80, #0d2a50)', border: '1px solid #2a5a90', boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}
+                >
+                  📦
+                </div>
+                <h1 className="text-xl font-bold tracking-tight" style={{ color: '#e2eaf4' }}>
+                  Depo Stok Takip
+                </h1>
+              </div>
+              <p className="text-[11px] tracking-widest font-medium" style={{ color: '#4a7aaa' }}>
+                3 KAT · 6 BÖLME · 2 PALET/BÖLME · 36 TOPLAM SLOT
+              </p>
             </div>
-            <div className="flex gap-3">
-              <StatCard label="Toplam" value={stats.totalSlots} color="blue" />
-              <StatCard label="Dolu" value={stats.occupiedSlots} color="green" />
-              <StatCard label="Boş" value={stats.emptySlots} color="gray" />
+
+            {/* Stats */}
+            <div className="flex items-center gap-3">
+              <StatPill label="Toplam" value={stats.totalSlots} color="#4a7aaa" />
+              <StatPill label="Dolu" value={stats.occupiedSlots} color="#10b981" />
+              <StatPill label="Boş" value={stats.emptySlots} color="#6b7280" />
+              {/* Fill bar */}
+              <div className="hidden sm:flex flex-col gap-1 ml-2">
+                <div className="text-[9px] text-slate-500 text-right font-bold tracking-wider">
+                  DOLULUK %{fillPct}
+                </div>
+                <div className="w-28 h-2 rounded-full overflow-hidden" style={{ background: '#0a1525' }}>
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{
+                      width: `${fillPct}%`,
+                      background: fillPct > 80
+                        ? 'linear-gradient(90deg, #ef4444, #dc2626)'
+                        : fillPct > 50
+                        ? 'linear-gradient(90deg, #f59e0b, #d97706)'
+                        : 'linear-gradient(90deg, #10b981, #059669)',
+                    }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
       {/* Tabs */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
+      <div
+        className="sticky top-0 z-30"
+        style={{
+          background: 'rgba(10,18,30,0.92)',
+          backdropFilter: 'blur(12px)',
+          borderBottom: '1px solid #1a2f45',
+        }}
+      >
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex">
             <TabButton active={activeTab === 'shelf'} onClick={() => setActiveTab('shelf')}>
-              Raf Haritası
+              🏗 Raf Haritası
             </TabButton>
             <TabButton active={activeTab === 'inventory'} onClick={() => setActiveTab('inventory')}>
-              Anlık Stok
+              📋 Anlık Stok
               {stats.occupiedSlots > 0 && (
-                <span className="ml-1.5 bg-blue-100 text-blue-700 text-xs px-1.5 py-0.5 rounded-full font-semibold">
+                <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full font-bold"
+                  style={{ background: 'rgba(16,185,129,0.2)', color: '#10b981' }}>
                   {stats.occupiedSlots}
                 </span>
               )}
             </TabButton>
             <TabButton active={activeTab === 'log'} onClick={() => setActiveTab('log')}>
-              İşlem Geçmişi
+              📜 İşlem Geçmişi
               {transactions.length > 0 && (
-                <span className="ml-1.5 bg-gray-100 text-gray-600 text-xs px-1.5 py-0.5 rounded-full font-semibold">
+                <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full font-bold"
+                  style={{ background: 'rgba(100,130,180,0.2)', color: '#6496c8' }}>
                   {transactions.length}
                 </span>
               )}
@@ -72,15 +132,9 @@ export default function Home() {
 
       {/* Content */}
       <main className="max-w-7xl mx-auto px-4 py-6">
-        {activeTab === 'shelf' && (
-          <ShelfMap slots={slots} onSlotClick={setSelectedSlotId} />
-        )}
-        {activeTab === 'inventory' && (
-          <InventoryTable slots={slots} onSlotClick={setSelectedSlotId} />
-        )}
-        {activeTab === 'log' && (
-          <TransactionLog transactions={transactions} />
-        )}
+        {activeTab === 'shelf' && <ShelfMap slots={slots} onSlotClick={setSelectedSlotId} />}
+        {activeTab === 'inventory' && <InventoryTable slots={slots} onSlotClick={setSelectedSlotId} />}
+        {activeTab === 'log' && <TransactionLog transactions={transactions} />}
       </main>
 
       {/* Modal */}
@@ -98,45 +152,28 @@ export default function Home() {
   )
 }
 
-function StatCard({
-  label,
-  value,
-  color,
-}: {
-  label: string
-  value: number
-  color: 'blue' | 'green' | 'gray'
-}) {
-  const colors = {
-    blue: 'bg-blue-600 text-white',
-    green: 'bg-emerald-500 text-white',
-    gray: 'bg-blue-800 text-blue-200',
-  }
+function StatPill({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <div className={`rounded-lg px-3 py-1.5 text-center ${colors[color]}`}>
-      <div className="text-xl font-bold leading-none">{value}</div>
-      <div className="text-xs mt-0.5 opacity-80">{label}</div>
+    <div
+      className="flex flex-col items-center px-3 py-1.5 rounded-lg"
+      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+    >
+      <span className="text-xl font-bold leading-none" style={{ color }}>{value}</span>
+      <span className="text-[9px] mt-0.5 font-semibold tracking-wider" style={{ color: '#4a6a8a' }}>{label.toUpperCase()}</span>
     </div>
   )
 }
 
-function TabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
-}) {
+function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-        active
-          ? 'border-blue-600 text-blue-600'
-          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-      }`}
+      className="flex items-center gap-1.5 px-4 py-3.5 text-sm font-medium transition-all border-b-2"
+      style={{
+        color: active ? '#60a5fa' : '#4a6a8a',
+        borderBottomColor: active ? '#3b82f6' : 'transparent',
+        background: active ? 'rgba(59,130,246,0.06)' : 'transparent',
+      }}
     >
       {children}
     </button>

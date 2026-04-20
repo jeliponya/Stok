@@ -14,15 +14,15 @@ interface Props {
 
 type Mode = 'view' | 'add' | 'remove' | 'move'
 
+const inputCls = `
+  w-full rounded-lg px-3 py-2 text-sm outline-none transition
+  bg-slate-800/60 border border-slate-600/50 text-slate-200
+  placeholder-slate-600 focus:border-blue-500/70 focus:ring-1 focus:ring-blue-500/30
+`
+
 export default function StockModal({ slot, allSlots, onClose, onAdd, onRemove, onMove }: Props) {
   const [mode, setMode] = useState<Mode>('view')
-  const [form, setForm] = useState({
-    productName: '',
-    productCode: '',
-    quantity: '',
-    unit: 'adet',
-    notes: '',
-  })
+  const [form, setForm] = useState({ productName: '', productCode: '', quantity: '', unit: 'adet', notes: '' })
   const [moveTarget, setMoveTarget] = useState('')
   const [removeNotes, setRemoveNotes] = useState('')
   const [removeQty, setRemoveQty] = useState('')
@@ -38,12 +38,11 @@ export default function StockModal({ slot, allSlots, onClose, onAdd, onRemove, o
   if (!slot) return null
 
   const { tier, compartment, slot: slotLetter } = parseSlotId(slot.id)
-  const locationLabel = `${TIER_LABELS[tier]} – ${compartment}. Bölme – ${slotLetter} Paleti`
+  const tierShort = tier === 1 ? 'ALT KAT' : tier === 2 ? 'ORTA KAT' : 'ÜST KAT'
+  const locationLabel = `${compartment}. Bölme · ${slotLetter} Paleti`
   const occupied = slot.pallet !== null
 
-  const emptySlots = Object.values(allSlots).filter(
-    (s) => s.pallet === null && s.id !== slot.id
-  )
+  const emptySlots = Object.values(allSlots).filter((s) => s.pallet === null && s.id !== slot.id)
 
   function handleAdd(e: React.FormEvent) {
     e.preventDefault()
@@ -73,20 +72,51 @@ export default function StockModal({ slot, allSlots, onClose, onAdd, onRemove, o
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+      style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div
+        className="w-full sm:max-w-md mx-0 sm:mx-4 rounded-t-2xl sm:rounded-2xl overflow-hidden"
+        style={{
+          background: 'linear-gradient(160deg, #0e1e32 0%, #0a1625 100%)',
+          border: '1px solid #1a3050',
+          boxShadow: '0 -8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03) inset',
+        }}
+      >
         {/* Header */}
-        <div className={`px-5 py-4 ${occupied ? 'bg-emerald-600' : 'bg-blue-600'}`}>
+        <div
+          className="px-5 py-4 relative overflow-hidden"
+          style={{
+            background: occupied
+              ? 'linear-gradient(90deg, #064e3b, #065f46)'
+              : 'linear-gradient(90deg, #1e3a5f, #1e4a7a)',
+            borderBottom: `1px solid ${occupied ? '#047857' : '#1e4a7a'}`,
+          }}
+        >
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs text-white/70 uppercase tracking-wider">
-                {occupied ? 'Dolu Palet' : 'Boş Palet'}
+              <span
+                className="inline-block text-[9px] font-bold tracking-[0.2em] px-2 py-0.5 rounded-full mb-1.5"
+                style={{
+                  background: occupied ? 'rgba(16,185,129,0.2)' : 'rgba(59,130,246,0.2)',
+                  color: occupied ? '#6ee7b7' : '#93c5fd',
+                }}
+              >
+                {tierShort}
+              </span>
+              <h3 className="font-bold text-base" style={{ color: '#e2eaf4' }}>
+                {locationLabel}
+              </h3>
+              <p className="text-xs mt-0.5" style={{ color: occupied ? '#6ee7b7' : '#93c5fd' }}>
+                {occupied ? `${slot.pallet!.productName}` : 'Boş palet slotu'}
               </p>
-              <h3 className="text-white font-bold text-base mt-0.5">{locationLabel}</h3>
             </div>
             <button
               onClick={onClose}
-              className="text-white/70 hover:text-white text-2xl leading-none mt-0.5"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-lg transition"
+              style={{ background: 'rgba(0,0,0,0.25)', color: 'rgba(255,255,255,0.5)' }}
             >
               ×
             </button>
@@ -99,47 +129,45 @@ export default function StockModal({ slot, allSlots, onClose, onAdd, onRemove, o
             <>
               {occupied ? (
                 <div className="space-y-2 mb-5">
-                  <Row label="Ürün Adı" value={slot.pallet!.productName} />
-                  <Row label="Ürün Kodu" value={slot.pallet!.productCode || '—'} />
-                  <Row label="Miktar" value={`${slot.pallet!.quantity} ${slot.pallet!.unit}`} />
-                  <Row
+                  <InfoRow label="Ürün Adı" value={slot.pallet!.productName} />
+                  <InfoRow label="Ürün Kodu" value={slot.pallet!.productCode || '—'} />
+                  <InfoRow
+                    label="Mevcut Stok"
+                    value={`${slot.pallet!.quantity} ${slot.pallet!.unit}`}
+                    highlight
+                  />
+                  <InfoRow
                     label="Giriş Tarihi"
                     value={new Date(slot.pallet!.entryDate).toLocaleDateString('tr-TR')}
                   />
-                  {slot.pallet!.notes && <Row label="Not" value={slot.pallet!.notes} />}
+                  {slot.pallet!.notes && <InfoRow label="Not" value={slot.pallet!.notes} />}
                 </div>
               ) : (
-                <p className="text-gray-400 text-sm mb-5 text-center py-4">Bu palet boş</p>
+                <p className="text-sm text-center py-6 tracking-wide" style={{ color: '#2a4a6a' }}>
+                  Bu palet slotu boş
+                </p>
               )}
 
               <div className="flex flex-col gap-2">
                 {!occupied && (
-                  <button
-                    onClick={() => setMode('add')}
-                    className="w-full py-2.5 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
-                  >
-                    Ürün Ekle (Stok Girişi)
-                  </button>
+                  <ActionButton color="blue" onClick={() => setMode('add')}>
+                    + Ürün Ekle (Stok Girişi)
+                  </ActionButton>
                 )}
                 {occupied && (
                   <>
-                    <button
-                      onClick={() => setMode('remove')}
-                      className="w-full py-2.5 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition"
-                    >
-                      Ürün Çıkart (Stok Çıkışı)
-                    </button>
-                    <button
-                      onClick={() => setMode('move')}
-                      className="w-full py-2.5 rounded-lg bg-amber-500 text-white font-semibold hover:bg-amber-600 transition"
-                    >
-                      Taşı (Başka Bölmeye)
-                    </button>
+                    <ActionButton color="red" onClick={() => setMode('remove')}>
+                      − Ürün Çıkart (Stok Çıkışı)
+                    </ActionButton>
+                    <ActionButton color="amber" onClick={() => setMode('move')}>
+                      ↗ Taşı (Başka Bölmeye)
+                    </ActionButton>
                   </>
                 )}
                 <button
                   onClick={onClose}
-                  className="w-full py-2 rounded-lg border border-gray-200 text-gray-600 text-sm hover:bg-gray-50 transition"
+                  className="w-full py-2.5 rounded-lg text-sm font-medium transition"
+                  style={{ background: 'rgba(255,255,255,0.04)', color: '#4a6a8a', border: '1px solid #1a3050' }}
                 >
                   Kapat
                 </button>
@@ -150,62 +178,40 @@ export default function StockModal({ slot, allSlots, onClose, onAdd, onRemove, o
           {/* Add mode */}
           {mode === 'add' && (
             <form onSubmit={handleAdd} className="space-y-3">
-              <h4 className="font-semibold text-gray-700 mb-1">Stok Girişi</h4>
-              <Field
-                label="Ürün Adı *"
-                value={form.productName}
+              <SectionTitle>Stok Girişi</SectionTitle>
+              <Field label="Ürün Adı *" value={form.productName}
                 onChange={(v) => setForm((p) => ({ ...p, productName: v }))}
-                placeholder="Örn: A4 Kağıt"
-                required
-              />
-              <Field
-                label="Ürün Kodu"
-                value={form.productCode}
+                placeholder="Örn: A4 Kağıt" required />
+              <Field label="Ürün Kodu" value={form.productCode}
                 onChange={(v) => setForm((p) => ({ ...p, productCode: v }))}
-                placeholder="Örn: KGT-001"
-              />
+                placeholder="Örn: KGT-001" />
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <Field
-                    label="Miktar *"
-                    type="number"
-                    value={form.quantity}
+                  <Field label="Miktar *" type="number" value={form.quantity}
                     onChange={(v) => setForm((p) => ({ ...p, quantity: v }))}
-                    placeholder="0"
-                    required
-                  />
+                    placeholder="0" required />
                 </div>
                 <div className="w-28">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Birim</label>
+                  <label className="block text-xs font-medium mb-1" style={{ color: '#4a6a8a' }}>Birim</label>
                   <select
                     value={form.unit}
                     onChange={(e) => setForm((p) => ({ ...p, unit: e.target.value }))}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className={inputCls}
                   >
                     {['adet', 'kg', 'lt', 'paket', 'koli', 'palet'].map((u) => (
-                      <option key={u}>{u}</option>
+                      <option key={u} style={{ background: '#0e1e32' }}>{u}</option>
                     ))}
                   </select>
                 </div>
               </div>
-              <Field
-                label="Not"
-                value={form.notes}
+              <Field label="Not" value={form.notes}
                 onChange={(v) => setForm((p) => ({ ...p, notes: v }))}
-                placeholder="İsteğe bağlı not..."
-              />
+                placeholder="İsteğe bağlı not..." />
               <div className="flex gap-2 pt-1">
-                <button
-                  type="submit"
-                  className="flex-1 py-2.5 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
-                >
-                  Kaydet
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMode('view')}
-                  className="px-4 py-2.5 rounded-lg border border-gray-200 text-gray-600 text-sm hover:bg-gray-50 transition"
-                >
+                <ActionButton color="blue" type="submit">Kaydet</ActionButton>
+                <button type="button" onClick={() => setMode('view')}
+                  className="px-4 rounded-lg text-sm font-medium transition"
+                  style={{ background: 'rgba(255,255,255,0.04)', color: '#4a6a8a', border: '1px solid #1a3050' }}>
                   İptal
                 </button>
               </div>
@@ -215,54 +221,45 @@ export default function StockModal({ slot, allSlots, onClose, onAdd, onRemove, o
           {/* Remove mode */}
           {mode === 'remove' && (
             <div className="space-y-3">
-              <h4 className="font-semibold text-gray-700">Stok Çıkışı</h4>
-              <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">
-                <strong>{slot.pallet!.productName}</strong> — Mevcut:{' '}
-                <strong>{slot.pallet!.quantity} {slot.pallet!.unit}</strong>
+              <SectionTitle>Stok Çıkışı</SectionTitle>
+              <div className="rounded-xl p-3 text-sm" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+                <span style={{ color: '#fca5a5' }}>{slot.pallet!.productName}</span>
+                <span style={{ color: '#6a3a3a' }}> — Mevcut: </span>
+                <span className="font-bold" style={{ color: '#f87171' }}>{slot.pallet!.quantity} {slot.pallet!.unit}</span>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">
-                  Çıkarılacak Miktar * (max {slot.pallet!.quantity})
+                <label className="block text-xs font-medium mb-1" style={{ color: '#4a6a8a' }}>
+                  Çıkarılacak Miktar * (maks. {slot.pallet!.quantity})
                 </label>
                 <input
-                  type="number"
-                  min={1}
-                  max={slot.pallet!.quantity}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                  type="number" min={1} max={slot.pallet!.quantity}
+                  className={inputCls}
+                  style={{ borderColor: removeQty && Number(removeQty) >= slot.pallet!.quantity ? 'rgba(239,68,68,0.5)' : undefined }}
                   placeholder={`1 – ${slot.pallet!.quantity}`}
                   value={removeQty}
                   onChange={(e) => setRemoveQty(e.target.value)}
                 />
-                {removeQty && Number(removeQty) < slot.pallet!.quantity && (
-                  <p className="text-xs text-amber-600 mt-1">
-                    Çıkıştan sonra kalan: {slot.pallet!.quantity - Number(removeQty)} {slot.pallet!.unit}
+                {removeQty && Number(removeQty) > 0 && Number(removeQty) < slot.pallet!.quantity && (
+                  <p className="text-xs mt-1.5 font-medium" style={{ color: '#f59e0b' }}>
+                    Çıkıştan sonra kalan: <strong>{slot.pallet!.quantity - Number(removeQty)} {slot.pallet!.unit}</strong>
                   </p>
                 )}
                 {removeQty && Number(removeQty) >= slot.pallet!.quantity && (
-                  <p className="text-xs text-red-500 mt-1">Tüm stok çıkarılacak, palet boşalacak.</p>
+                  <p className="text-xs mt-1.5 font-medium" style={{ color: '#ef4444' }}>
+                    Tüm stok çıkarılacak, palet boşalacak.
+                  </p>
                 )}
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Not (isteğe bağlı)</label>
-                <input
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
-                  placeholder="Çıkış nedeni..."
-                  value={removeNotes}
-                  onChange={(e) => setRemoveNotes(e.target.value)}
-                />
-              </div>
+              <Field label="Not (isteğe bağlı)" value={removeNotes}
+                onChange={setRemoveNotes} placeholder="Çıkış nedeni..." />
               <div className="flex gap-2 pt-1">
-                <button
-                  onClick={handleRemove}
-                  disabled={!removeQty || Number(removeQty) <= 0}
-                  className="flex-1 py-2.5 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition disabled:opacity-40"
-                >
+                <ActionButton color="red" onClick={handleRemove}
+                  disabled={!removeQty || Number(removeQty) <= 0}>
                   Çıkart
-                </button>
-                <button
-                  onClick={() => setMode('view')}
-                  className="px-4 py-2.5 rounded-lg border border-gray-200 text-gray-600 text-sm hover:bg-gray-50 transition"
-                >
+                </ActionButton>
+                <button onClick={() => setMode('view')}
+                  className="px-4 rounded-lg text-sm font-medium transition"
+                  style={{ background: 'rgba(255,255,255,0.04)', color: '#4a6a8a', border: '1px solid #1a3050' }}>
                   İptal
                 </button>
               </div>
@@ -272,40 +269,36 @@ export default function StockModal({ slot, allSlots, onClose, onAdd, onRemove, o
           {/* Move mode */}
           {mode === 'move' && (
             <div className="space-y-3">
-              <h4 className="font-semibold text-gray-700">Palet Taşı</h4>
-              <p className="text-sm text-gray-500">
-                <strong>{slot.pallet!.productName}</strong> hangi bölmeye taşınacak?
+              <SectionTitle>Palet Taşı</SectionTitle>
+              <p className="text-sm" style={{ color: '#4a7aaa' }}>
+                <strong style={{ color: '#c8d8e8' }}>{slot.pallet!.productName}</strong> hangi slota taşınacak?
               </p>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Hedef Bölme</label>
+                <label className="block text-xs font-medium mb-1" style={{ color: '#4a6a8a' }}>Hedef Slot</label>
                 <select
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  className={inputCls}
                   value={moveTarget}
                   onChange={(e) => setMoveTarget(e.target.value)}
                 >
-                  <option value="">Seçiniz...</option>
+                  <option value="" style={{ background: '#0e1e32' }}>Seçiniz...</option>
                   {emptySlots.map((s) => {
                     const p = parseSlotId(s.id)
+                    const t = p.tier === 1 ? 'Alt Kat' : p.tier === 2 ? 'Orta Kat' : 'Üst Kat'
                     return (
-                      <option key={s.id} value={s.id}>
-                        {TIER_LABELS[p.tier]} – {p.compartment}. Bölme – {p.slot} Paleti
+                      <option key={s.id} value={s.id} style={{ background: '#0e1e32' }}>
+                        {t} – {p.compartment}. Bölme – {p.slot} Paleti
                       </option>
                     )
                   })}
                 </select>
               </div>
               <div className="flex gap-2 pt-1">
-                <button
-                  onClick={handleMove}
-                  disabled={!moveTarget}
-                  className="flex-1 py-2.5 rounded-lg bg-amber-500 text-white font-semibold hover:bg-amber-600 transition disabled:opacity-40"
-                >
-                  Taşı
-                </button>
-                <button
-                  onClick={() => setMode('view')}
-                  className="px-4 py-2.5 rounded-lg border border-gray-200 text-gray-600 text-sm hover:bg-gray-50 transition"
-                >
+                <ActionButton color="amber" onClick={handleMove} disabled={!moveTarget}>
+                  ↗ Taşı
+                </ActionButton>
+                <button onClick={() => setMode('view')}
+                  className="px-4 rounded-lg text-sm font-medium transition"
+                  style={{ background: 'rgba(255,255,255,0.04)', color: '#4a6a8a', border: '1px solid #1a3050' }}>
                   İptal
                 </button>
               </div>
@@ -317,36 +310,77 @@ export default function StockModal({ slot, allSlots, onClose, onAdd, onRemove, o
   )
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function InfoRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className="flex justify-between text-sm">
-      <span className="text-gray-500">{label}</span>
-      <span className="text-gray-800 font-medium text-right max-w-[60%]">{value}</span>
+    <div className="flex justify-between items-center py-1.5" style={{ borderBottom: '1px solid #0f2030' }}>
+      <span className="text-xs" style={{ color: '#3a5a7a' }}>{label}</span>
+      <span
+        className="text-sm font-medium text-right max-w-[60%]"
+        style={{ color: highlight ? '#10b981' : '#c8d8e8' }}
+      >
+        {value}
+      </span>
     </div>
   )
 }
 
-function Field({
-  label,
-  value,
-  onChange,
-  placeholder,
-  type = 'text',
-  required,
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <h4 className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#4a6a8a' }}>
+      {children}
+    </h4>
+  )
+}
+
+function ActionButton({
+  children, color, onClick, type = 'button', disabled,
 }: {
-  label: string
-  value: string
-  onChange: (v: string) => void
-  placeholder?: string
-  type?: string
-  required?: boolean
+  children: React.ReactNode
+  color: 'blue' | 'red' | 'amber'
+  onClick?: () => void
+  type?: 'button' | 'submit'
+  disabled?: boolean
+}) {
+  const styles = {
+    blue:  { bg: 'linear-gradient(135deg, #1d4ed8, #2563eb)', border: '#3b82f6', shadow: 'rgba(59,130,246,0.3)' },
+    red:   { bg: 'linear-gradient(135deg, #b91c1c, #dc2626)', border: '#ef4444', shadow: 'rgba(239,68,68,0.3)'  },
+    amber: { bg: 'linear-gradient(135deg, #b45309, #d97706)', border: '#f59e0b', shadow: 'rgba(245,158,11,0.3)' },
+  }
+  const s = styles[color]
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className="flex-1 py-2.5 rounded-lg font-semibold text-sm text-white transition"
+      style={{
+        background: s.bg,
+        border: `1px solid ${s.border}`,
+        boxShadow: `0 4px 12px ${s.shadow}`,
+        opacity: disabled ? 0.4 : 1,
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+function Field({
+  label, value, onChange, placeholder, type = 'text', required,
+}: {
+  label: string; value: string; onChange: (v: string) => void
+  placeholder?: string; type?: string; required?: boolean
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+      <label className="block text-xs font-medium mb-1" style={{ color: '#4a6a8a' }}>{label}</label>
       <input
         type={type}
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+        className={`
+          w-full rounded-lg px-3 py-2 text-sm outline-none transition
+          bg-slate-800/60 border border-slate-600/50 text-slate-200
+          placeholder-slate-600 focus:border-blue-500/70 focus:ring-1 focus:ring-blue-500/30
+        `}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
